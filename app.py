@@ -111,17 +111,6 @@ def upload():
     # Creacion del objeto automata
     automata = AutomataOp()
 
-    res.write("Automatas leidos del archivo\n")
-    res.write("Automata 1:\n\n")
-    for linea in automata_lineas_1:
-        res.write(linea)
-
-    res.write("\n\nAutomata 2:\n\n")
-    for linea in automata_lineas_2:
-        res.write(linea)
-
-
-
     #######################################################################################################
     automata1_afd = automata.afn_eAafd(list.copy(automata1), 'K')
     print("La version AFD del automata 1 es:", automata1_afd)
@@ -170,6 +159,86 @@ def upload():
     print("La version AFD del automata concatenacion es:", automata_concatenacion_afd)
     automata_concatenacion_minimo = automata.minimizacion(list.copy(automata_concatenacion_afd), 'k')
     print("La version minimizada del automata concatenacion es:", automata_concatenacion_minimo)
+
+    res.write("Automatas leidos del archivo\n")
+    res.write("Automata 1:\n\n")
+    for linea in automata_lineas_1:
+        res.write(linea)
+
+    res.write("\n\nAutomata 2:\n\n")
+    for linea in automata_lineas_2:
+        res.write(linea)
+
+    res.write("\n\nAutomatas originales\n\n")
+    print("\nAutomata 1:\n\n", file=res)
+    for linea in automata1:
+        print(linea, file=res)
+    print("\nAutomata 2:\n\n", file=res)
+    for linea in automata2:
+        print(linea, file=res)
+    #######################################################################################################
+    print("\n\nLa version AFD del automata 1 es:\n\n", file=res)
+    for linea in automata1_afd:
+        print(linea, file=res)
+    print("\n\nLa version AFD del automata 2 es:\n\n", file=res)
+    for linea in automata2_afd:
+        print(linea, file=res)
+    print("\n\nLa minimizacion del automata 1 es:\n\n", file=res)
+    for linea in automata1_minimizacion:
+        print(linea, file=res)
+    print("\n\nLa minimizacion del automata 2 es:\n\n", file=res)
+    for linea in automata2_minimizacion:
+        print(linea, file=res)
+    #######################################################################################################
+    print("\n\nEl complemento del automata 1 es:\n\n", file=res)
+    for linea in automata_complemento1:
+        print(linea, file=res)
+    print("\n\nEl complemento del automata 2 es:\n\n", file=res)
+    for linea in automata_complemento2:
+        print(linea, file=res)
+    print("\n\nLa version AFD del automata complemento 1 es:\n\n", file=res)
+    for linea in automata_complemento1_afd:
+        print(linea, file=res)
+    print("\n\nLa version AFD del automata complemento 2 es:\n\n", file=res)
+    for linea in automata_complemento2_afd:
+        print(linea, file=res)
+    print("\n\nLa version minimizada del automata complemento 1 es:\n\n", file=res)
+    for linea in automata_complemento1_minimo:
+        print(linea, file=res)
+    print("\n\nLa version minimizada del automata complemento 2 es:\n\n", file=res)
+    for linea in automata_complemento2_minimo:
+        print(linea, file=res)
+    #######################################################################################################
+    print("\n\nLa union de ambos automatas es:", file=res)
+    for linea in automata_union:
+        print(linea, file=res)
+    print("\n\nLa version AFD del automata union es:", file=res)
+    for linea in automata_union_afd:
+        print(linea, file=res)
+    print("\n\nLa version minimizada del automata union es:", file=res)
+    for linea in automata_union_minimo:
+        print(linea, file=res)
+    #######################################################################################################
+    print("\n\nLa interseccion de ambos automatas es:\n\n", file=res)
+    for linea in automata_interseccion:
+        print(linea, file=res)
+    print("\n\nLa version AFD del automata interseccion es:\n\n", file=res)
+    for linea in automata_interseccion_afd:
+        print(linea, file=res)
+    print("\n\nLa version minimizada del automata interseccion es:\n\n", file=res)
+    for linea in automata_interseccion_minimo:
+        print(linea, file=res)
+    #######################################################################################################
+    print("\n\nLa concatenacion de ambos automatas es:\n\n", file=res)
+    for linea in automata_concatenacion:
+        print(linea, file=res)
+    print("\n\nLa version AFD del automata concatenacion es:\n\n", file=res)
+    for linea in automata_concatenacion_afd:
+        print(linea, file=res)
+    print("\n\nLa version minimizada del automata concatenacion es:\n\n", file=res)
+    for linea in automata_concatenacion_minimo:
+        print(linea, file=res)
+    ########################################################################################################
 
     aa1.close()
     aa2.close()
