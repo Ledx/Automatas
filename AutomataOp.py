@@ -1,5 +1,3 @@
-from heapq import merge
-
 class AutomataOp:
 
     #######################################################################################################
@@ -7,7 +5,7 @@ class AutomataOp:
 
     def complemento(self,automata):
 
-        aut_complemento = automata
+        aut_complemento = list.copy(automata)
         nuevos_finales = set(aut_complemento[0]).difference(aut_complemento[3])
         aut_complemento[3] = nuevos_finales
 
@@ -17,15 +15,16 @@ class AutomataOp:
     #Union
 
     def union(self, automata1, automata2):
+
         automatas_union = list()
 
-        estados_union = automata1[0] + automata2[0]
+        estados_union = list.copy(automata1[0]) + list.copy(automata2[0])
         estados_union.insert(0, 'Q0')
-        alfabeto = list(set(automata2[1]).union(automata1[1]))
+        alfabeto = list(set(list.copy(automata2[1])).union(list.copy(automata1[1])))
         alfabeto.append('e')
         alfabeto_union = alfabeto
-        transiciones_union = self.transicionesUnion(automata1, automata2)
-        aceptadores_union = set.union(automata1[3],automata2[3])
+        transiciones_union = self.transicionesUnion(list.copy(automata1), list.copy(automata2))
+        aceptadores_union = set.union(set.copy(automata1[3]),set.copy(automata2[3]))
         automatas_union.append(estados_union)
         automatas_union.append(alfabeto_union)
         automatas_union.append(transiciones_union)
@@ -35,8 +34,8 @@ class AutomataOp:
 
     def transicionesUnion(self, automata1, automata2):
 
-        transiciones1 = automata1[2]
-        transiciones2 = automata2[2]
+        transiciones1 = dict.copy(automata1[2])
+        transiciones2 = dict.copy(automata2[2])
         nueva_transicion = {'Q0': ['e:' + str(automata1[0][0]) + ',' + str(automata2[0][0])]}
         transicion_union = dict(transiciones1, **transiciones2)
         transiciones_union = dict(nueva_transicion, **transicion_union)
@@ -50,10 +49,10 @@ class AutomataOp:
 
         automatas_interseccion = list()
 
-        estados_interseccion = self.estadoCruzados(automata1[0], automata2[0])
-        alfabeto_interseccion = list(set(automata2[1]).intersection(automata1[1]))
-        transiciones_interseccion = self.transicionesEstadosCruzados(automata1[2], automata2[2],estados_interseccion,alfabeto_interseccion)
-        aceptadores_interseccion = self.aceptadoresEstadosCruzados(automata1[3], automata2[3])
+        estados_interseccion = self.estadoCruzados(list.copy(automata1[0]), list.copy(automata2[0]))
+        alfabeto_interseccion = list(set(list.copy(automata2[1])).intersection(automata1[1]))
+        transiciones_interseccion = self.transicionesEstadosCruzados(dict.copy(automata1[2]), dict.copy(automata2[2]),estados_interseccion,alfabeto_interseccion)
+        aceptadores_interseccion = self.aceptadoresEstadosCruzados(set.copy(automata1[3]), set.copy(automata2[3]))
         automatas_interseccion.append(estados_interseccion)
         automatas_interseccion.append(alfabeto_interseccion)
         automatas_interseccion.append(transiciones_interseccion)
@@ -102,8 +101,8 @@ class AutomataOp:
 
         automatas_concatenacion = list()
 
-        estados_concatenacion = automata1[0] + automata2[0]
-        alfabeto = list(set(automata1[1]).union(automata2[1]))
+        estados_concatenacion = list.copy(automata1[0]) + list.copy(automata2[0])
+        alfabeto = list(set(list.copy(automata1[1])).union(list.copy(automata2[1])))
         alfabeto.append('e')
         alfabeto_concatenacion = alfabeto
         transiciones_concatenacion = self.transicionesConcatenacion(automata1, automata2)
@@ -299,7 +298,6 @@ class AutomataOp:
                     matriz_minimizadora[i][j] = 1
                     nuevos_estados.append({estados[i], estados[j]})
         estados_minimos_sin_ordenar = self.interseccionEstados(nuevos_estados,estados)
-
         return estados_minimos_sin_ordenar
 
 
@@ -324,17 +322,21 @@ class AutomataOp:
     def interseccionEstados(self,nuevos_estados,estados_originales):
 
         estados_interseccion = set()
+        estados_a_remover = list()
 
         for estado in estados_originales:
             estados_interseccion.clear()
+            estados_a_remover.clear()
+            estados_interseccion.add(estado)
             for es in nuevos_estados:
                 if estado in es:
                     estados_interseccion = estados_interseccion.union(set.copy(es))
-                    nuevos_estados.remove(es)
-            if len(estados_interseccion) > 0:
-                nuevos_estados.append(set.copy(estados_interseccion))
-            else:
-                nuevos_estados.append(estado)
+                    estados_a_remover.append(es)
+            nuevos_estados.append(set.copy(estados_interseccion))
+            for remover in estados_a_remover:
+                if remover in nuevos_estados:
+                    nuevos_estados.remove(remover)
+
         return nuevos_estados
 
     def formadorAutomata(self,automata,estados,nombre_estado):
