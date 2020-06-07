@@ -1,3 +1,4 @@
+
 class AutomataOp:
 
     #######################################################################################################
@@ -64,11 +65,11 @@ class AutomataOp:
 
         return [(e1+'-'+e2)for e1 in estados1 for e2 in estados2]
 
-    def transicionesEstadosCruzados(self,transiciones1,transiciones2,transiciones_cruzadas,alfabeto):
+    def transicionesEstadosCruzados(self,transiciones1,transiciones2,estados_cruzados,alfabeto):
 
         transiciones_estados_cruzados = dict()
 
-        for estado_compuesto in transiciones_cruzadas:
+        for estado_compuesto in estados_cruzados:
             transiciones = self.transicionEstadoCompuesto(transiciones1, transiciones2, estado_compuesto,alfabeto)
             transiciones_estados_cruzados.update({estado_compuesto: transiciones})
 
@@ -160,6 +161,8 @@ class AutomataOp:
         aceptadores_temp = list()
         lista_error = list()
 
+        contador = 0
+        err = 0
         estados_aceptadores = automata[3]
         alfabeto = automata[1]
         if alfabeto.count('e') > 0:
@@ -170,28 +173,39 @@ class AutomataOp:
 
         while finalizado != 0:
             estado_actual = pila.pop()
+            #print("El estado actual es:",estado_actual)
             nuevos_estados = self.e_cerradura(estado_actual, automata[2])
-            estados_temp.append(self.formadorNombres(nuevos_estados))
+            #print("La e_cerradura del estado actual es: ",nuevos_estados)
+            estados_temp.append(self.formadorNombresOrdenados(nuevos_estados,automata[0]))
+            #print("Los estados actuales son: ",estados_temp)
             transiciones_simbolo.clear()
             for simbolo in alfabeto:
+                #print("Con el simbolo ", simbolo, " me muevo a ",self.moverListas(nuevos_estados, simbolo, automata[2])
                 if len(self.moverListas(nuevos_estados,simbolo,automata[2])) > 0:
-                    if self.sinDuplicados(estados_temp, self.moverListas(nuevos_estados, simbolo, automata[2])):
-                        pila.append(self.moverListas(nuevos_estados,simbolo,automata[2]))
-                    nombre_futuro = self.e_cerradura( self.moverListas(nuevos_estados,simbolo,automata[2]) ,automata[2])
-                    transiciones_simbolo.append(simbolo+':'+self.formadorNombres(nombre_futuro))
+                    nombre_futuro = self.e_cerradura(self.moverListas(nuevos_estados, simbolo, automata[2]),automata[2])
+                    if self.formadorNombresOrdenados(self.e_cerradura( self.moverListas(nuevos_estados,simbolo,automata[2]),automata[2]),automata[0]) not in estados_temp:
+                        #print("Agrego a la pila el estado ",nombre_futuro)
+                        pila.append(nombre_futuro)
+                    transiciones_simbolo.append(simbolo+':'+self.formadorNombresOrdenados(nombre_futuro,automata[0]))
                 else:
                     transiciones_simbolo.append(simbolo + ':E')
-            transiciones_temp.update({self.formadorNombres(nuevos_estados): list.copy(transiciones_simbolo)})
+                    err = 1
+            transiciones_temp.update({self.formadorNombresOrdenados(nuevos_estados,automata[0]): list.copy(transiciones_simbolo)})
+            #print("Los nuevos estados son: ",nuevos_estados)
+            #print("Los estados aceptadores son: ",estados_aceptadores)
             if len(estados_aceptadores.intersection(nuevos_estados)) > 0:
-                aceptadores_temp.append(self.formadorNombres(nuevos_estados))
-            if len(pila) == 0:
+                aceptadores_temp.append(self.formadorNombresOrdenados(nuevos_estados,automata[0]))
+            if len(pila) == 0 or contador > 15:
                 finalizado = 0
-
-        for simbolo in alfabeto:
-            error = simbolo+':E'
-            lista_error.append(error)
-        transiciones_temp.update({'E': list.copy(lista_error)})
-        estados_temp.append('E')
+            #print("La pila queda ",pila)
+            contador += 1
+        if err == 1:
+            for simbolo in alfabeto:
+                error = simbolo+':E'
+                lista_error.append(error)
+            transiciones_temp.update({'E': list.copy(lista_error)})
+            estados_temp.append('E')
+        #print(estados_temp,"\n",transiciones_temp)
         nuevo_nombre = self.renombrador(estados_temp,transiciones_temp,alfabeto,aceptadores_temp,nombre_estado)
         estados = nuevo_nombre[0]
         transiciones = nuevo_nombre[1]
@@ -200,6 +214,7 @@ class AutomataOp:
         determinista.append(alfabeto)
         determinista.append(transiciones)
         determinista.append(aceptadores)
+
         return determinista
 
     def e_cerradura(self,estado,transiciones):
@@ -231,21 +246,6 @@ class AutomataOp:
             estados_siguientes = estados_siguientes.union(self.mover(estado,simbolo,transiciones))
 
         return estados_siguientes
-
-    def sinDuplicados(self,estados,nuevo_estado):
-
-        for estado in estados:
-            if nuevo_estado == set(estado.split('.')):
-                return False
-        return True
-
-    def formadorNombres(self, conjunto):
-
-        nombre = ''
-        for elemento in conjunto:
-            nombre = nombre + elemento + '.'
-
-        return nombre[:-1]
 
     #######################################################################################################
     #Minimizacion
@@ -284,12 +284,14 @@ class AutomataOp:
             for j in range(0, len(estados)):
                 if (estados[i] in aceptadores and estados[j] in no_aceptadores) or (estados[j] in aceptadores and estados[i] in no_aceptadores):
                     matriz_minimizadora[i][j] = 1
+
         #Segundo llenado de la matriz
         for i in range(0,len(estados)):
             for j in range(0,len(estados)):
                 if matriz_minimizadora[i][j] != 1 and self.revisionCruzada(transiciones,i,j,estados,alfabeto,matriz_minimizadora):
                     matriz_minimizadora[i][j] = 1
                     matriz_minimizadora[j][i] = 1
+
         #Obtencion de los estados semi finales
         for i in range(0,len(estados)):
             for j in range(0,len(estados)):
@@ -304,6 +306,7 @@ class AutomataOp:
     def revisionCruzada(self,transiciones,i,j,estados,alfabeto,matriz):
 
         estados_siguientes = list()
+        revision = False
         z = 0
         for simbolo in alfabeto:
             estados_siguientes.append(list(self.mover(estados[i], simbolo, transiciones)))
@@ -314,10 +317,9 @@ class AutomataOp:
         z = 0
         for s in range(0,len(alfabeto)):
             if matriz[estados.index(estados_siguientes[z])][estados.index(estados_siguientes[z + 1])] == 1:
-                return True
+                revision = True
             z += 2
-
-        return False
+        return revision
 
     def interseccionEstados(self,nuevos_estados,estados_originales):
 
@@ -360,13 +362,24 @@ class AutomataOp:
         for aceptador in aceptadores:
             aceptadores_sin_nombre.add(self.formadorNombresOrdenados(aceptador,estados_originales))
         transiciones_sin_nombre = self.transicionesCompuestasMinimas(transiciones_originales,estados_originales,estados_sin_nombre,alfabeto)
-        nombrado = self.renombrador(estados_sin_nombre,transiciones_sin_nombre,alfabeto,aceptadores_sin_nombre,nombre_estado)
+        if self.automataNoValido(alfabeto,transiciones_sin_nombre,estados_sin_nombre):
+            nombrado = self.renombrador(estados_originales, transiciones_originales, alfabeto,aceptadores_originales,
+                                    nombre_estado)
+        else:
+            nombrado = self.renombrador(estados_sin_nombre,transiciones_sin_nombre,alfabeto,aceptadores_sin_nombre,nombre_estado)
         automata_minimo.append(nombrado[0])
         automata_minimo.append(alfabeto)
         automata_minimo.append(nombrado[1])
         automata_minimo.append(nombrado[2])
 
         return automata_minimo
+
+    def automataNoValido(self,alfabeto, transiciones,estados):
+        for estado in estados:
+            for simbolo in alfabeto:
+                if len(self.mover(estado,simbolo,transiciones)) == 0:
+                    return True
+        return False
 
     def transicionesCompuestasMinimas(self, transiciones, estados_originales,estados_nuevos, alfabeto):
 
@@ -382,6 +395,7 @@ class AutomataOp:
 
         transiciones_compuestas = list()
         estados_conjunto = set()
+
         estados = estado.split('.')
         for simbolo in alfabeto:
             estados_conjunto.clear()
@@ -396,23 +410,6 @@ class AutomataOp:
 
         return transiciones_compuestas
 
-    def formadorNombresOrdenados(self, conjunto,estados):
-
-        conjunto_indices = list()
-        conjunto_ordenado = list()
-        if isinstance(conjunto, str):
-            conjunto = {conjunto}
-        for estado in conjunto:
-            conjunto_indices.append(estados.index(estado))
-        conjunto_ordenado_indices = sorted(conjunto_indices)
-        for indice in conjunto_ordenado_indices:
-            conjunto_ordenado.append(estados[indice])
-        nombre = ''
-
-        for elemento in conjunto_ordenado:
-            nombre = nombre + elemento + '.'
-
-        return nombre[:-1]
 
     #######################################################################################################
     #Funciones compartidas
@@ -426,6 +423,7 @@ class AutomataOp:
         renombrados = list()
         transiciones_lista = list()
         aceptadores_renombrados = set()
+
         j = 0
         for es in estados:
             estados_viejos_nuevos.update({es:nombre + str(j)})
@@ -458,3 +456,20 @@ class AutomataOp:
                     if transicion.split(':')[1].split(',') != 'E':
                         estados = set(transicion.split(':')[1].split(','))
         return estados
+
+    def formadorNombresOrdenados(self, conjunto,estados):
+
+        conjunto_indices = list()
+        conjunto_ordenado = list()
+        if isinstance(conjunto, str):
+            conjunto = {conjunto}
+        for estado in conjunto:
+            conjunto_indices.append(estados.index(estado))
+        conjunto_ordenado_indices = sorted(conjunto_indices)
+        for indice in conjunto_ordenado_indices:
+            conjunto_ordenado.append(estados[indice])
+        nombre = ''
+        for elemento in conjunto_ordenado:
+            nombre = nombre + elemento + '.'
+
+        return nombre[:-1]
