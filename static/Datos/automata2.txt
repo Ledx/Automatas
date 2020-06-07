@@ -1,7 +1,9 @@
-q0 q1 q2 q3
-a x e
-a:q1 e:q1 x:q3
-a:q2 e:q3
-x:q3
-e:q2
-q3
+A B C D F G
+0 1
+0:B 1:C
+0:A 1:D
+0:F 1:G
+0:F 1:G
+0:F 1:G
+0:G 1:G
+D C F
